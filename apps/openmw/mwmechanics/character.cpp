@@ -2447,8 +2447,8 @@ namespace MWMechanics
                         std::string cellName;
                         if (mPtr.getCell()->isExterior())
                         {
-                            const ESM::Cell* cell = mPtr.getCell()->getCell();
-                            const ESM::Region* region = world->getStore().get<ESM::Region>().search(cell->mRegion);
+                            const MWWorld::Cell* cell = mPtr.getCell()->getCell();
+                            const ESM::Region* region = world->getStore().get<ESM::Region>().search(cell->getRegion());
                             if (region)
                             {
                                 std::string regionName = Misc::StringUtils::lowerCase(region->mName);
