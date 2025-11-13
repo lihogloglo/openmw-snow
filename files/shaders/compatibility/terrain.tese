@@ -24,8 +24,11 @@ in vec3 passViewPos_TE_in[];
 out vec2 uv;
 out vec3 passNormal;
 out vec3 passViewPos;
+out float euclideanDepth;
+out float linearDepth;
 
 #include "lib/terrain/deformation.glsl"
+#include "lib/view/depth.glsl"
 
 // Interpolate barycentric coordinates
 vec3 interpolate3D(vec3 v0, vec3 v1, vec3 v2)
@@ -82,6 +85,10 @@ void main()
 
     // Transform to clip space
     gl_Position = osg_ModelViewProjectionMatrix * vec4(displacedPos, 1.0);
+
+    // Calculate depth values for fog and other effects
+    euclideanDepth = length(passViewPos);
+    linearDepth = getLinearDepth(gl_Position.z, passViewPos.z);
 }
 
 #endif
