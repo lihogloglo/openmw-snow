@@ -14,6 +14,19 @@ uniform float deformationScale;
 uniform int materialType;
 uniform float maxDisplacementDepth;  // Maximum displacement in world units (default: 50.0)
 
+// Shadow uniforms (if shadows are enabled)
+#if @shadows_enabled
+    @foreach shadow_texture_unit_index @shadow_texture_unit_list
+        uniform mat4 shadowSpaceMatrix@shadow_texture_unit_index;
+        out vec4 shadowSpaceCoords@shadow_texture_unit_index;
+#if @perspectiveShadowMaps
+        uniform mat4 validRegionMatrix@shadow_texture_unit_index;
+        out vec4 shadowRegionCoords@shadow_texture_unit_index;
+#endif
+    @endforeach
+    const bool onlyNormalOffsetUV = false;
+#endif
+
 // Input from TCS
 in vec3 worldPos_TE_in[];
 in vec2 uv_TE_in[];
@@ -24,8 +37,11 @@ in vec3 passViewPos_TE_in[];
 out vec2 uv;
 out vec3 passNormal;
 out vec3 passViewPos;
+out float euclideanDepth;
+out float linearDepth;
 
 #include "lib/terrain/deformation.glsl"
+#include "lib/view/depth.glsl"
 
 // Interpolate barycentric coordinates
 vec3 interpolate3D(vec3 v0, vec3 v1, vec3 v2)
@@ -82,6 +98,40 @@ void main()
 
     // Transform to clip space
     gl_Position = osg_ModelViewProjectionMatrix * vec4(displacedPos, 1.0);
+
+    // Calculate depth values for fog and other effects
+    euclideanDepth = length(passViewPos);
+    linearDepth = getLinearDepth(gl_Position.z, passViewPos.z);
+
+    // Recalculate shadow coordinates for displaced geometry
+#if @shadows_enabled
+    vec3 viewNormal = osg_NormalMatrix * passNormal;
+    vec4 shadowOffset;
+    @foreach shadow_texture_unit_index @shadow_texture_unit_list
+#if @perspectiveShadowMaps
+        shadowRegionCoords@shadow_texture_unit_index = validRegionMatrix@shadow_texture_unit_index * viewPos;
+#endif
+
+#if @disableNormalOffsetShadows
+        shadowSpaceCoords@shadow_texture_unit_index = shadowSpaceMatrix@shadow_texture_unit_index * viewPos;
+#else
+        shadowOffset = vec4(viewNormal * @shadowNormalOffset, 0.0);
+
+        if (onlyNormalOffsetUV)
+        {
+            vec4 lightSpaceXY = viewPos + shadowOffset;
+            lightSpaceXY = shadowSpaceMatrix@shadow_texture_unit_index * lightSpaceXY;
+
+            shadowSpaceCoords@shadow_texture_unit_index.xy = lightSpaceXY.xy;
+        }
+        else
+        {
+            vec4 offsetViewPosition = viewPos + shadowOffset;
+            shadowSpaceCoords@shadow_texture_unit_index = shadowSpaceMatrix@shadow_texture_unit_index * offsetViewPosition;
+        }
+#endif
+    @endforeach
+#endif
 }
 
 #endif
