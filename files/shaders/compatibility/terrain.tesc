@@ -8,7 +8,9 @@ layout(vertices = 3) out;
 #define PER_PIXEL_LIGHTING (@normalMap || @specularMap || @forcePPL)
 
 // Uniforms
-uniform vec3 eyePos;                        // Camera position (from OpenMW)
+uniform vec3 eyePos;                        // Camera position in world space
+uniform mat4 osg_ModelViewMatrix;
+uniform mat4 osg_ViewMatrixInverse;
 uniform sampler2D terrainDeformationMap;    // Displacement texture
 uniform vec2 deformationOffset;             // Player movement offset
 uniform float deformationScale;             // World units per texel
@@ -50,14 +52,18 @@ out vec4 passColor_TE_in[];
 out float euclideanDepth_TE_in[];
 out float linearDepth_TE_in[];
 
-float getTessellationLevel(vec3 pos)
+float getTessellationLevel(vec3 modelPos)
 {
+    // Convert model space to world space for distance calculation
+    vec4 viewPos = osg_ModelViewMatrix * vec4(modelPos, 1.0);
+    vec3 worldPos = (osg_ViewMatrixInverse * viewPos).xyz;
+
     // Factor 1: Distance-based LOD
-    float dist = distance(eyePos, pos);
+    float dist = distance(eyePos, worldPos);
     float distanceFactor = clamp(1.0 - (dist / 2000.0), 0.0, 1.0); // 0-2000 units
 
     // Factor 2: Deformation amount (tessellate more near footprints)
-    vec2 deformUV = (pos.xy + deformationOffset) / deformationScale;
+    vec2 deformUV = (worldPos.xy + deformationOffset) / deformationScale;
     float deformation = texture(terrainDeformationMap, deformUV).r;
     float deformFactor = smoothstep(0.01, 0.1, deformation);
 

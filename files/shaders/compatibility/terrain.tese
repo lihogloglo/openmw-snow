@@ -11,6 +11,7 @@ layout(triangles, fractional_odd_spacing, ccw) in;
 uniform mat4 osg_ModelViewProjectionMatrix;
 uniform mat4 osg_ModelViewMatrix;
 uniform mat3 osg_NormalMatrix;
+uniform mat4 osg_ViewMatrixInverse;
 uniform sampler2D terrainDeformationMap;
 uniform vec2 deformationOffset;
 uniform float deformationScale;
@@ -81,8 +82,8 @@ vec2 interpolate2D(vec2 v0, vec2 v1, vec2 v2)
 
 void main()
 {
-    // Interpolate vertex attributes
-    vec3 worldPos = interpolate3D(worldPos_TE_in[0], worldPos_TE_in[1], worldPos_TE_in[2]);
+    // Interpolate vertex attributes (in model space)
+    vec3 modelPos = interpolate3D(worldPos_TE_in[0], worldPos_TE_in[1], worldPos_TE_in[2]);
     uv = interpolate2D(uv_TE_in[0], uv_TE_in[1], uv_TE_in[2]);
     vec3 baseNormal = interpolate3D(passNormal_TE_in[0], passNormal_TE_in[1], passNormal_TE_in[2]);
     passViewPos = interpolate3D(passViewPos_TE_in[0], passViewPos_TE_in[1], passViewPos_TE_in[2]);
@@ -97,16 +98,20 @@ void main()
     // Interpolate color (simple linear interpolation for vec4)
     passColor = gl_TessCoord.x * passColor_TE_in[0] + gl_TessCoord.y * passColor_TE_in[1] + gl_TessCoord.z * passColor_TE_in[2];
 
-    // Sample deformation texture
+    // Convert model position to world space for deformation texture sampling
+    vec4 viewPos_temp = osg_ModelViewMatrix * vec4(modelPos, 1.0);
+    vec3 worldPos = (osg_ViewMatrixInverse * viewPos_temp).xyz;
+
+    // Sample deformation texture using world coordinates
     vec2 deformUV = (worldPos.xy + deformationOffset) / deformationScale;
     float deformValue = texture(terrainDeformationMap, deformUV).r;
 
     // Apply material-specific depth multiplier
     float depthMultiplier = getDepthMultiplier(materialType);
 
-    // Displace vertex downward (negative Z in world space)
+    // Displace vertex downward in model space (negative Z)
     float displacement = deformValue * depthMultiplier * maxDisplacementDepth;
-    vec3 displacedPos = worldPos;
+    vec3 displacedPos = modelPos;
     displacedPos.z -= displacement;
 
     // Calculate new normal by sampling neighbors for gradient
