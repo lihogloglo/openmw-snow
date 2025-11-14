@@ -110,10 +110,10 @@ namespace MWRender
         float mDecayRate;              // How fast footprints fade (per second)
 
         static constexpr int DEFORMATION_TEXTURE_SIZE = 1024;
-        static constexpr float DEFAULT_DEFORMATION_RADIUS = 2.0f;
-        static constexpr float DEFAULT_WORLD_TEXTURE_SIZE = 8.0f;  // 8x8 world units
-        static constexpr float DEFAULT_FOOTPRINT_INTERVAL = 0.3f;  // New footprint every 0.3 units
-        static constexpr float DEFAULT_DECAY_RATE = 0.1f;          // 10% fade per second
+        static constexpr float DEFAULT_DEFORMATION_RADIUS = 50.0f;   // 50 units ≈ 10-15 meters
+        static constexpr float DEFAULT_WORLD_TEXTURE_SIZE = 200.0f;  // 200x200 world units to match larger radius
+        static constexpr float DEFAULT_FOOTPRINT_INTERVAL = 5.0f;    // New footprint every 5 units (1 meter)
+        static constexpr float DEFAULT_DECAY_RATE = 0.1f;            // 10% fade per second
     };
 
     /// Generates dense terrain mesh geometry for smooth deformation

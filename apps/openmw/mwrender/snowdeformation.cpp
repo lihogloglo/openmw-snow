@@ -241,7 +241,7 @@ void SnowDeformationManager::update(const osg::Vec3f& playerPos, float dt)
         Footprint footprint;
         footprint.position = osg::Vec2f(playerPos.x(), playerPos.y());
         footprint.intensity = 0.3f;  // Intensity in texture (0-1 range, will be multiplied by deformationStrength)
-        footprint.radius = 0.25f;    // Larger radius for more visible footprints
+        footprint.radius = 3.0f;     // 3 units ≈ 60cm radius per footprint
         footprint.timestamp = 0.0f;
 
         mFootprints.push_back(footprint);
