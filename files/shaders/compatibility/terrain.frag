@@ -28,6 +28,10 @@ uniform sampler2D blendMap;
 uniform sampler2D terrainDeformationMap;
 uniform vec2 deformationOffset;
 uniform float deformationScale;
+#if !@terrainDeformTess
+// For non-tessellation path, we need the inverse view matrix to convert to world space
+uniform mat4 osg_ViewMatrixInverse;
+#endif
 #endif
 
 #if @terrainDeformTess
@@ -144,7 +148,7 @@ void main()
 
 #if @terrainDeformation && !@terrainDeformTess
     // Non-tessellation path: darken deformed areas for visual feedback
-    vec3 worldPos = (osg_InvViewMatrix * vec4(passViewPos, 1.0)).xyz;
+    vec3 worldPos = (osg_ViewMatrixInverse * vec4(passViewPos, 1.0)).xyz;
     vec2 deformUV = (worldPos.xy + deformationOffset) / deformationScale;
     float deformation = texture2D(terrainDeformationMap, deformUV).r;
     // Darken compressed areas

@@ -157,9 +157,11 @@ void main()
     // Transform to clip space
     gl_Position = osg_ModelViewProjectionMatrix * vec4(displacedPos, 1.0);
 
-    // Handle user clip planes using gl_ClipDistance (gl_ClipVertex doesn't work in tessellation shaders)
-    // OpenMW uses clip plane 0 for water reflections/refractions
-    gl_ClipDistance[0] = dot(gl_ClipPlane[0], viewPos);
+    // NOTE: Water clipping (gl_ClipVertex) is not supported with tessellation shaders.
+    // gl_ClipVertex doesn't work in TES, and gl_ClipDistance requires gl_ClipPlane[]
+    // which may not be available in all drivers for tessellation shaders.
+    // Water reflections/refractions may show more terrain than necessary, but this
+    // is a minor visual artifact compared to having invisible terrain.
 
     // Calculate depth values for fog and other effects
     euclideanDepth = length(passViewPos);
