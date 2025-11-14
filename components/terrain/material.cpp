@@ -7,6 +7,7 @@
 #include <osg/TexEnvCombine>
 #include <osg/TexMat>
 #include <osg/Texture2D>
+#include <osg/Uniform>
 
 #include <components/resource/scenemanager.hpp>
 #include <components/sceneutil/depth.hpp>
@@ -15,6 +16,12 @@
 #include <components/stereo/stereomanager.hpp>
 
 #include <mutex>
+
+// Forward declare SnowDeformationManager (full definition not needed here)
+namespace MWRender
+{
+    class SnowDeformationManager;
+}
 
 namespace
 {
@@ -227,12 +234,26 @@ namespace MWRender
 
 namespace Terrain
 {
-    // Static pointer to snow deformation manager for terrain integration
-    static MWRender::SnowDeformationManager* sSnowDeformationManager = nullptr;
-
-    void setSnowDeformationManager(MWRender::SnowDeformationManager* manager)
+    // Static data for snow deformation integration
+    struct SnowDeformationData
     {
-        sSnowDeformationManager = manager;
+        bool enabled = false;
+        osg::ref_ptr<osg::Texture2D> texture;
+        float strength = 0.5f;
+        osg::Vec2f textureCenter;
+        float worldTextureSize = 300.0f;
+    };
+
+    static SnowDeformationData sSnowDeformationData;
+
+    void setSnowDeformationData(bool enabled, osg::Texture2D* texture, float strength,
+                                 const osg::Vec2f& textureCenter, float worldTextureSize)
+    {
+        sSnowDeformationData.enabled = enabled;
+        sSnowDeformationData.texture = texture;
+        sSnowDeformationData.strength = strength;
+        sSnowDeformationData.textureCenter = textureCenter;
+        sSnowDeformationData.worldTextureSize = worldTextureSize;
     }
 
     std::vector<osg::ref_ptr<osg::StateSet>> createPasses(bool useShaders, Resource::SceneManager* sceneManager,
@@ -320,7 +341,7 @@ namespace Terrain
                 defineMap["reconstructNormalZ"] = reconstructNormalZ ? "1" : "0";
 
                 // Snow deformation integration
-                bool enableSnowDeformation = (sSnowDeformationManager != nullptr && sSnowDeformationManager->isEnabled());
+                bool enableSnowDeformation = sSnowDeformationData.enabled && sSnowDeformationData.texture != nullptr;
                 defineMap["snowDeformation"] = enableSnowDeformation ? "1" : "0";
 
                 Stereo::shaderStereoDefines(defineMap);
@@ -332,11 +353,11 @@ namespace Terrain
                 if (enableSnowDeformation)
                 {
                     // Use texture unit 4 to avoid conflicts with terrain textures (0-3)
-                    stateset->setTextureAttributeAndModes(4, sSnowDeformationManager->getDeformationTexture(), osg::StateAttribute::ON);
-                    stateset->addUniform(new osg::Uniform("deformationMap", 4));
-                    stateset->addUniform(new osg::Uniform("deformationStrength", sSnowDeformationManager->getDeformationStrength()));
-                    stateset->addUniform(new osg::Uniform("textureCenter", sSnowDeformationManager->getTextureCenter()));
-                    stateset->addUniform(new osg::Uniform("worldTextureSize", sSnowDeformationManager->getWorldTextureSize()));
+                    stateset->setTextureAttributeAndModes(4, sSnowDeformationData.texture.get(), osg::StateAttribute::ON);
+                    stateset->addUniform(new osg::Uniform("deformationMap", (int)4));
+                    stateset->addUniform(new osg::Uniform("deformationStrength", sSnowDeformationData.strength));
+                    stateset->addUniform(new osg::Uniform("textureCenter", sSnowDeformationData.textureCenter));
+                    stateset->addUniform(new osg::Uniform("worldTextureSize", sSnowDeformationData.worldTextureSize));
                 }
             }
             else

@@ -33,8 +33,9 @@ namespace Terrain
         const std::vector<TextureLayer>& layers, const std::vector<osg::ref_ptr<osg::Texture2D>>& blendmaps,
         int blendmapScale, float layerTileSize, bool esm4terrain = false);
 
-    /// Set the snow deformation manager for terrain integration (called by RenderingManager)
-    void setSnowDeformationManager(MWRender::SnowDeformationManager* manager);
+    /// Set snow deformation data for terrain integration (called by RenderingManager)
+    void setSnowDeformationData(bool enabled, osg::Texture2D* texture, float strength,
+                                 const osg::Vec2f& textureCenter, float worldTextureSize);
 }
 
 #endif

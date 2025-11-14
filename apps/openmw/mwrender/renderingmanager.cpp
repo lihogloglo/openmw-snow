@@ -490,8 +490,14 @@ namespace MWRender
         // Initialize snow deformation system
         mSnowDeformation = std::make_unique<SnowDeformationManager>(sceneRoot, mResourceSystem);
 
-        // Register snow deformation manager with terrain system for shader integration
-        Terrain::setSnowDeformationManager(mSnowDeformation.get());
+        // Register snow deformation data with terrain system for shader integration
+        Terrain::setSnowDeformationData(
+            mSnowDeformation->isEnabled(),
+            mSnowDeformation->getDeformationTexture(),
+            mSnowDeformation->getDeformationStrength(),
+            mSnowDeformation->getTextureCenter(),
+            mSnowDeformation->getWorldTextureSize()
+        );
 
         const std::string& normalMapPattern = Settings::shaders().mNormalMapPattern;
         const std::string& heightMapPattern = Settings::shaders().mNormalHeightMapPattern;
