@@ -154,11 +154,12 @@ void main()
     vec4 viewPos = osg_ModelViewMatrix * vec4(displacedPos, 1.0);
     passViewPos = viewPos.xyz;
 
-    // Set clip vertex for user clip planes
-    gl_ClipVertex = viewPos;
-
     // Transform to clip space
     gl_Position = osg_ModelViewProjectionMatrix * vec4(displacedPos, 1.0);
+
+    // Handle user clip planes using gl_ClipDistance (gl_ClipVertex doesn't work in tessellation shaders)
+    // OpenMW uses clip plane 0 for water reflections/refractions
+    gl_ClipDistance[0] = dot(gl_ClipPlane[0], viewPos);
 
     // Calculate depth values for fog and other effects
     euclideanDepth = length(passViewPos);
