@@ -106,6 +106,9 @@ void main()
         vec3 center = (worldPos_TC_in[0] + worldPos_TC_in[1] + worldPos_TC_in[2]) / 3.0;
         float tessLevel = getTessellationLevel(center);
 
+        // DEBUG: Force minimum tessellation to ensure visibility
+        tessLevel = max(tessLevel, 4.0);
+
         // Set outer tessellation levels (one per edge)
         gl_TessLevelOuter[0] = tessLevel;
         gl_TessLevelOuter[1] = tessLevel;

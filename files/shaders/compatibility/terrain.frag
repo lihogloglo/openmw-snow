@@ -96,6 +96,12 @@ vec3 normalToView(vec3 normal)
 
 void main()
 {
+#if @terrainDeformTess
+    // DEBUG: Make tessellated terrain render in bright green to verify it's visible
+    gl_FragData[0] = vec4(0.0, 1.0, 0.0, 1.0);
+    return;
+#endif
+
     vec2 adjustedUV = (gl_TextureMatrix[0] * vec4(uv, 0.0, 1.0)).xy;
 
 #if @parallax

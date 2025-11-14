@@ -109,30 +109,35 @@ void main()
     // Apply material-specific depth multiplier
     float depthMultiplier = getDepthMultiplier(materialType);
 
+    // DEBUG: Disable displacement to test basic tessellation
+    vec3 displacedPos = modelPos;
+
     // Displace vertex downward in model space (negative Z)
     // Clamp deformValue to prevent NaN/Inf issues
-    deformValue = clamp(deformValue, 0.0, 1.0);
-    float displacement = deformValue * depthMultiplier * maxDisplacementDepth;
-    vec3 displacedPos = modelPos;
-    displacedPos.z -= displacement;
+    // deformValue = clamp(deformValue, 0.0, 1.0);
+    // float displacement = deformValue * depthMultiplier * maxDisplacementDepth;
+    // displacedPos.z -= displacement;
+
+    // DEBUG: Use base normal without deformation
+    passNormal = baseNormal;
 
     // Calculate new normal by sampling neighbors for gradient
-    float texelSize = 1.0 / 1024.0;  // Match deformation map size
-    float hL = texture(terrainDeformationMap, deformUV + vec2(-texelSize, 0.0)).r;
-    float hR = texture(terrainDeformationMap, deformUV + vec2(texelSize, 0.0)).r;
-    float hD = texture(terrainDeformationMap, deformUV + vec2(0.0, -texelSize)).r;
-    float hU = texture(terrainDeformationMap, deformUV + vec2(0.0, texelSize)).r;
+    // float texelSize = 1.0 / 1024.0;  // Match deformation map size
+    // float hL = texture(terrainDeformationMap, deformUV + vec2(-texelSize, 0.0)).r;
+    // float hR = texture(terrainDeformationMap, deformUV + vec2(texelSize, 0.0)).r;
+    // float hD = texture(terrainDeformationMap, deformUV + vec2(0.0, -texelSize)).r;
+    // float hU = texture(terrainDeformationMap, deformUV + vec2(0.0, texelSize)).r;
 
     // Compute gradient in world space
-    vec3 gradient = vec3(
-        (hL - hR) * depthMultiplier * maxDisplacementDepth,
-        (hD - hU) * depthMultiplier * maxDisplacementDepth,
-        2.0 * deformationScale * texelSize
-    );
+    // vec3 gradient = vec3(
+    //     (hL - hR) * depthMultiplier * maxDisplacementDepth,
+    //     (hD - hU) * depthMultiplier * maxDisplacementDepth,
+    //     2.0 * deformationScale * texelSize
+    // );
 
     // Blend with base normal based on deformation amount
-    vec3 deformedNormal = normalize(baseNormal + gradient);
-    passNormal = mix(baseNormal, deformedNormal, smoothstep(0.0, 0.2, deformValue));
+    // vec3 deformedNormal = normalize(baseNormal + gradient);
+    // passNormal = mix(baseNormal, deformedNormal, smoothstep(0.0, 0.2, deformValue));
 
     // Set up normal-to-view matrix for tangent space calculations
     normalToViewMatrix = osg_NormalMatrix;
