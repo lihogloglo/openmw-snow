@@ -32,7 +32,7 @@ SnowDeformationManager::SnowDeformationManager(osg::ref_ptr<osg::Group> rootNode
     , mEnabled(true)
     , mTerrainMaterialType(1)  // Default to snow
     , mDeformationRadius(DEFAULT_DEFORMATION_RADIUS)
-    , mDeformationStrength(3.0f)  // Multiplier for displacement (higher = deeper snow trails)
+    , mDeformationStrength(0.5f)  // Subtle, realistic snow compression (0.5 = moderate depth)
     , mLastPlayerPos(0, 0, 0)
     , mWorldTextureSize(DEFAULT_WORLD_TEXTURE_SIZE)
     , mTextureCenter(0, 0)
@@ -240,8 +240,8 @@ void SnowDeformationManager::update(const osg::Vec3f& playerPos, float dt)
     {
         Footprint footprint;
         footprint.position = osg::Vec2f(playerPos.x(), playerPos.y());
-        footprint.intensity = 0.3f;  // Intensity in texture (0-1 range, will be multiplied by deformationStrength)
-        footprint.radius = 3.0f;     // 3 units ≈ 60cm radius per footprint
+        footprint.intensity = 0.8f;  // Much more visible intensity (0-1 range, will be multiplied by deformationStrength)
+        footprint.radius = 8.0f;     // 8 units ≈ 1.6m diameter - realistic for character footprint
         footprint.timestamp = 0.0f;
 
         mFootprints.push_back(footprint);

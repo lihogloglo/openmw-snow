@@ -16,8 +16,8 @@ void main()
     vec2 centered = texCoord * 2.0 - 1.0;
     float dist = length(centered);
 
-    // Use falloff function from deformation library
-    float falloff = getFootprintFalloff(dist, 1.0);
+    // Use falloff function from deformation library with actual footprint radius
+    float falloff = getFootprintFalloff(dist, footprintRadius);
 
     // Apply intensity
     float deformation = falloff * footprintIntensity;
