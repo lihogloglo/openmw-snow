@@ -49,7 +49,7 @@ void main(void)
 
 #if @terrainDeformation
     // Convert model position to world space for deformation texture sampling
-    vec4 worldPos4 = osg_ModelMatrix * modelPos;
+    vec4 worldPos4 = osg_ViewMatrixInverse * gl_ModelViewMatrix * modelPos;
     vec3 worldPos = worldPos4.xyz;
 
     // Sample deformation texture
