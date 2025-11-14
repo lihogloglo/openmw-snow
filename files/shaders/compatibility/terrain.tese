@@ -1,4 +1,4 @@
-#version 400 core
+#version 400 compatibility
 
 #if @terrainDeformTess
 
@@ -110,6 +110,8 @@ void main()
     float depthMultiplier = getDepthMultiplier(materialType);
 
     // Displace vertex downward in model space (negative Z)
+    // Clamp deformValue to prevent NaN/Inf issues
+    deformValue = clamp(deformValue, 0.0, 1.0);
     float displacement = deformValue * depthMultiplier * maxDisplacementDepth;
     vec3 displacedPos = modelPos;
     displacedPos.z -= displacement;
@@ -151,6 +153,9 @@ void main()
     // Update view position with displacement
     vec4 viewPos = osg_ModelViewMatrix * vec4(displacedPos, 1.0);
     passViewPos = viewPos.xyz;
+
+    // Set clip vertex for user clip planes
+    gl_ClipVertex = viewPos;
 
     // Transform to clip space
     gl_Position = osg_ModelViewProjectionMatrix * vec4(displacedPos, 1.0);
