@@ -1,8 +1,4 @@
-#if @terrainDeformTess
-    #version 400 compatibility
-#else
-    #version 120
-#endif
+#version 400 compatibility
 
 #if @useUBO
     #extension GL_ARB_uniform_buffer_object : require
