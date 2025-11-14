@@ -319,6 +319,8 @@ namespace Terrain
                 stateset->addUniform(UniformCollection::value().mColorMode);
 
                 // Add terrain deformation uniforms if enabled
+                // Note: Uniforms are always added (even when disabled) so state updaters can safely access them
+                // When disabled, they're just set to default values and the shader branch won't execute
                 if (terrainDeform)
                 {
                     stateset->addUniform(UniformCollection::value().mTerrainDeformationMap);

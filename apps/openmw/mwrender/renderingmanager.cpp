@@ -287,8 +287,11 @@ namespace MWRender
 
         void setDefaults(osg::StateSet* stateset) override
         {
-            // Uniforms are already added by the terrain material system
-            // We just need to bind the texture here
+            // Only bind texture if terrain deformation is enabled and texture is valid
+            // The material system will add uniforms only when terrainDeformation define is set
+            if (!Settings::shaders().mTerrainDeformation)
+                return;
+
             if (mDeformationTexture && mDeformationTexture.valid())
             {
                 stateset->setTextureAttributeAndModes(3, mDeformationTexture, osg::StateAttribute::ON);
@@ -297,6 +300,10 @@ namespace MWRender
 
         void apply(osg::StateSet* stateset, osg::NodeVisitor* nv) override
         {
+            // Only update uniforms if terrain deformation is enabled
+            if (!Settings::shaders().mTerrainDeformation)
+                return;
+
             if (mDeformationTexture && mDeformationTexture.valid())
             {
                 osg::Uniform* deformOffsetUniform = stateset->getUniform("deformationOffset");
@@ -853,6 +860,22 @@ namespace MWRender
         {
             enableTerrain(true, store->getCell()->getWorldSpace());
             mTerrain->loadCell(store->getCell()->getGridX(), store->getCell()->getGridY());
+
+            // Initialize deformation offset for new cells if terrain deformation is enabled
+            if (mTerrainDeformationStateSetUpdater && mPlayerAnimation.get())
+            {
+                const MWWorld::Ptr& player = mPlayerAnimation->getPtr();
+                if (!player.isEmpty())
+                {
+                    osg::Vec3f playerPos(player.getRefData().getPosition().asVec3());
+                    const float sWorldScaleFactor = 2.5f;
+                    osg::Vec2f deformOffset(
+                        std::floor(playerPos.x() / sWorldScaleFactor),
+                        std::floor(playerPos.y() / sWorldScaleFactor)
+                    );
+                    mTerrainDeformationStateSetUpdater->setDeformationOffset(deformOffset);
+                }
+            }
         }
     }
     void RenderingManager::removeCell(const MWWorld::CellStore* store)

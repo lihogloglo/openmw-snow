@@ -47,16 +47,23 @@ void main(void)
     vec3 modelNormal = gl_Normal.xyz;
 
 #if @terrainDeformation
-    // For terrain, gl_Vertex is already in world space (terrain chunks are not transformed)
-    // We just need to apply the model matrix to get the actual world position
-    vec4 worldPos4 = gl_ModelViewMatrix * modelPos;
-    // Extract world position by removing the view transform (approximate for terrain)
-    // Since terrain is generally flat and not rotated, we can use the vertex position directly
-    // The deformationOffset already accounts for player position tracking
+    // Terrain vertex positions are in world space
     vec2 worldPosXY = modelPos.xy;
 
-    // Sample deformation texture
-    vec2 deformUV = (worldPosXY + deformationOffset * 2560.0) / deformationScale;
+    // Constants matching TerrainDeformationSurface
+    const float sWorldScaleFactor = 2.5;  // Must match TerrainDeformationSurface::sWorldScaleFactor
+    const float sRTTSize = 1024.0;        // Must match TerrainDeformationSurface::sRTTSize
+
+    // Convert to UV coordinates:
+    // - deformationOffset is player position in texture space (world units / 2.5)
+    // - Texture is centered on player, so we offset by half the texture size
+    // - UV formula: (world_pos / scale - player_offset + half_texture) / texture_size
+    vec2 texSpacePos = worldPosXY / sWorldScaleFactor;  // Convert world to texture space
+    vec2 relativePos = texSpacePos - deformationOffset;  // Relative to player
+    vec2 centeredPos = relativePos + vec2(sRTTSize * 0.5);  // Center texture on player
+    vec2 deformUV = centeredPos / sRTTSize;  // Normalize to [0,1]
+
+    // Sample deformation value
     float deformValue = texture2D(terrainDeformationMap, deformUV).r;
 
     // Apply material-specific depth multiplier
@@ -67,17 +74,18 @@ void main(void)
     modelPos.z -= displacement;
 
     // Calculate new normal by sampling neighbors for gradient
-    float texelSize = 1.0 / 1024.0;  // Match deformation map size (1024x1024)
+    float texelSize = 1.0 / sRTTSize;
     float hL = texture2D(terrainDeformationMap, deformUV + vec2(-texelSize, 0.0)).r;
     float hR = texture2D(terrainDeformationMap, deformUV + vec2(texelSize, 0.0)).r;
     float hD = texture2D(terrainDeformationMap, deformUV + vec2(0.0, -texelSize)).r;
     float hU = texture2D(terrainDeformationMap, deformUV + vec2(0.0, texelSize)).r;
 
-    // Compute gradient in world space (how much terrain slopes in X and Y)
+    // Compute gradient in world space (2.5 world units per texel)
+    float worldTexelSize = sWorldScaleFactor;  // World units per texel
     vec3 gradient = vec3(
-        (hL - hR) * depthMultiplier * maxDisplacementDepth,
-        (hD - hU) * depthMultiplier * maxDisplacementDepth,
-        2.0 * deformationScale * texelSize
+        (hL - hR) * depthMultiplier * maxDisplacementDepth / worldTexelSize,
+        (hD - hU) * depthMultiplier * maxDisplacementDepth / worldTexelSize,
+        2.0
     );
 
     // Blend with base normal based on deformation amount
