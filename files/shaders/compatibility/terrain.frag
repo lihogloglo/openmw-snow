@@ -1,4 +1,8 @@
-#version 120
+#if @terrainDeformTess
+    #version 400 compatibility
+#else
+    #version 120
+#endif
 
 #if @useUBO
     #extension GL_ARB_uniform_buffer_object : require
@@ -8,7 +12,11 @@
     #extension GL_EXT_gpu_shader4: require
 #endif
 
+#if @terrainDeformTess
+in vec2 uv;
+#else
 varying vec2 uv;
+#endif
 
 uniform sampler2D diffuseMap;
 
@@ -26,19 +34,38 @@ uniform vec2 deformationOffset;
 uniform float deformationScale;
 #endif
 
+#if @terrainDeformTess
+in float euclideanDepth;
+in float linearDepth;
+#else
 varying float euclideanDepth;
 varying float linearDepth;
+#endif
 
 #define PER_PIXEL_LIGHTING (@normalMap || @specularMap || @forcePPL)
 
 #if !PER_PIXEL_LIGHTING
-centroid varying vec3 passLighting;
-centroid varying vec3 passSpecular;
-centroid varying vec3 shadowDiffuseLighting;
-centroid varying vec3 shadowSpecularLighting;
+    #if @terrainDeformTess
+    centroid in vec3 passLighting;
+    centroid in vec3 passSpecular;
+    centroid in vec3 shadowDiffuseLighting;
+    centroid in vec3 shadowSpecularLighting;
+    #else
+    centroid varying vec3 passLighting;
+    centroid varying vec3 passSpecular;
+    centroid varying vec3 shadowDiffuseLighting;
+    centroid varying vec3 shadowSpecularLighting;
+    #endif
 #endif
+
+#if @terrainDeformTess
+in vec3 passViewPos;
+in vec3 passNormal;
+in mat3 normalToViewMatrix;
+#else
 varying vec3 passViewPos;
 varying vec3 passNormal;
+#endif
 
 uniform vec2 screenRes;
 uniform float far;
@@ -48,7 +75,24 @@ uniform float far;
 #include "lib/light/lighting.glsl"
 #include "lib/material/parallax.glsl"
 #include "fog.glsl"
+
+#if !@terrainDeformTess
 #include "compatibility/normals.glsl"
+#else
+// For tessellation, normalToViewMatrix is already declared above
+mat3 generateTangentSpace(vec4 tangent, vec3 normal)
+{
+    vec3 normalizedNormal = normalize(normal);
+    vec3 normalizedTangent = normalize(tangent.xyz);
+    vec3 binormal = cross(normalizedTangent, normalizedNormal) * tangent.w;
+    return mat3(normalizedTangent, binormal, normalizedNormal);
+}
+
+vec3 normalToView(vec3 normal)
+{
+    return normalize(normalToViewMatrix * normal);
+}
+#endif
 
 void main()
 {

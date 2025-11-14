@@ -1,4 +1,8 @@
-#version 120
+#if @terrainDeformTess
+    #version 400 compatibility
+#else
+    #version 120
+#endif
 
 #if @useUBO
     #extension GL_ARB_uniform_buffer_object : require
@@ -12,6 +16,7 @@
 
 #define PER_PIXEL_LIGHTING (@normalMap || @specularMap || @forcePPL)
 
+#if !@terrainDeformTess
 varying vec2 uv;
 varying float euclideanDepth;
 varying float linearDepth;
@@ -24,10 +29,30 @@ centroid varying vec3 shadowSpecularLighting;
 #endif
 varying vec3 passViewPos;
 varying vec3 passNormal;
+#endif
 
 #include "vertexcolors.glsl"
 #include "shadows_vertex.glsl"
+
+#if !@terrainDeformTess
 #include "compatibility/normals.glsl"
+#else
+// For tessellation, declare outputs explicitly
+out mat3 normalToViewMatrix;
+
+mat3 generateTangentSpace(vec4 tangent, vec3 normal)
+{
+    vec3 normalizedNormal = normalize(normal);
+    vec3 normalizedTangent = normalize(tangent.xyz);
+    vec3 binormal = cross(normalizedTangent, normalizedNormal) * tangent.w;
+    return mat3(normalizedTangent, binormal, normalizedNormal);
+}
+
+vec3 normalToView(vec3 normal)
+{
+    return normalize(normalToViewMatrix * normal);
+}
+#endif
 
 #include "lib/light/lighting.glsl"
 #include "lib/view/depth.glsl"
@@ -55,6 +80,22 @@ out float linearDepth_TC_in;
 
 void main(void)
 {
+#if @terrainDeformTess
+    // When tessellation is enabled, declare these as local variables
+    vec2 uv;
+    float euclideanDepth;
+    float linearDepth;
+    vec3 passViewPos;
+    vec3 passNormal;
+#if !PER_PIXEL_LIGHTING
+    vec3 passLighting;
+    vec3 passSpecular;
+    vec3 shadowDiffuseLighting;
+    vec3 shadowSpecularLighting;
+#endif
+    vec4 passColor;
+#endif
+
     gl_Position = modelToClip(gl_Vertex);
 
     vec4 viewPos = modelToView(gl_Vertex);
