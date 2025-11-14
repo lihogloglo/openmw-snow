@@ -1,18 +1,10 @@
 #version 120
 
-// Include deformation utilities from existing library
+// Include core vertex functions and deformation utilities
+#include "lib/core/vertex.h.glsl"
 #include "lib/terrain/deformation.glsl"
 
-// Vertex attributes
-attribute vec3 osg_Vertex;
-attribute vec3 osg_Normal;
-attribute vec2 osg_MultiTexCoord0;
-
-// Uniforms
-uniform mat4 osg_ModelViewProjectionMatrix;
-uniform mat4 osg_ModelViewMatrix;
-uniform mat4 osg_ViewMatrixInverse;
-uniform mat3 osg_NormalMatrix;
+// Uniforms - using OpenMW's injected uniforms
 uniform vec3 playerPos;
 
 // Deformation uniforms
@@ -70,8 +62,9 @@ vec3 calculateNormal(vec2 worldPos, float centerHeight)
 void main()
 {
     // Get world position of vertex (before displacement)
-    vec4 worldPosition = osg_ViewMatrixInverse * osg_ModelViewMatrix * vec4(osg_Vertex, 1.0);
-    vec2 worldPosXY = worldPosition.xy;
+    // The mesh is transformed to be centered at playerPos, so:
+    // worldPos = playerPos + vertexOffset
+    vec2 worldPosXY = playerPos.xy + gl_Vertex.xy;
 
     // Sample deformation at this position
     float deformation = sampleDeformation(worldPosXY);
@@ -82,7 +75,7 @@ void main()
     float displacement = -deformation * deformationStrength * depthMultiplier;
 
     // Displace vertex downward
-    vec3 displacedVertex = osg_Vertex + vec3(0.0, 0.0, displacement);
+    vec3 displacedVertex = gl_Vertex.xyz + vec3(0.0, 0.0, displacement);
 
     // Calculate new normal based on deformation gradient
     vec3 newNormal;
@@ -92,19 +85,18 @@ void main()
     }
     else
     {
-        newNormal = osg_Normal;
+        newNormal = gl_Normal;
     }
 
     // Transform to view space
-    viewPos = (osg_ModelViewMatrix * vec4(displacedVertex, 1.0)).xyz;
-    normal = normalize(osg_NormalMatrix * newNormal);
+    viewPos = (gl_ModelViewMatrix * vec4(displacedVertex, 1.0)).xyz;
+    normal = normalize(gl_NormalMatrix * newNormal);
 
     // Pass through to fragment shader
-    worldPos = worldPosition.xyz;
-    worldPos.z += displacement; // Update world Z
-    texCoord = osg_MultiTexCoord0;
+    worldPos = vec3(worldPosXY, playerPos.z + gl_Vertex.z + displacement);
+    texCoord = gl_MultiTexCoord0.xy;
     deformationDepth = deformation;
 
     // Final position
-    gl_Position = osg_ModelViewProjectionMatrix * vec4(displacedVertex, 1.0);
+    gl_Position = gl_ModelViewProjectionMatrix * vec4(displacedVertex, 1.0);
 }
