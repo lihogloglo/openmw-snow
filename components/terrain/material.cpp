@@ -343,12 +343,17 @@ namespace Terrain
                                 std::string source = shader->getShaderSource();
                                 Log(Debug::Warning) << "[TERRAIN SHADER #" << programCount << "] Vertex shader " << i << " length: " << source.length();
 
-                                // Check if hardcoded deformation is present
+                                // Check if hardcoded tests are present
+                                bool hasCollapseTest = source.find("gl_Position = vec4(0.0, 0.0, 0.0, 1.0)") != std::string::npos;
                                 bool hasDeformationUp = source.find("vertex.y += 100.0") != std::string::npos;
                                 bool hasDeformationDown = source.find("vertex.y -= 100.0") != std::string::npos;
                                 bool hasUniforms = source.find("snowDeformationMap") != std::string::npos;
 
-                                if (hasDeformationUp)
+                                if (hasCollapseTest)
+                                {
+                                    Log(Debug::Warning) << "[TERRAIN SHADER #" << programCount << "] ✓✓✓ COLLAPSE TEST FOUND - terrain should disappear to single point! ✓✓✓";
+                                }
+                                else if (hasDeformationUp)
                                 {
                                     Log(Debug::Warning) << "[TERRAIN SHADER #" << programCount << "] ✓ Hardcoded 100-unit RISE FOUND in shader " << i;
                                 }
@@ -358,7 +363,7 @@ namespace Terrain
                                 }
                                 else
                                 {
-                                    Log(Debug::Warning) << "[TERRAIN SHADER #" << programCount << "] ✗ No hardcoded deformation FOUND in shader " << i;
+                                    Log(Debug::Warning) << "[TERRAIN SHADER #" << programCount << "] ✗ No hardcoded test FOUND in shader " << i;
                                 }
 
                                 if (hasUniforms)

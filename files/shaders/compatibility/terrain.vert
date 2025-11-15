@@ -41,20 +41,11 @@ void main(void)
 {
     vec4 vertex = gl_Vertex;
 
-    // SNOW DEFORMATION DIAGNOSTIC TEST
-    // CRITICAL: Test if shader is even running by doing unconditional deformation
+    // SNOW DEFORMATION DIAGNOSTIC TEST - MOVED TO BEFORE gl_Position ASSIGNMENT
+    // The tests were failing because gl_Position was being overwritten at line 99!
 
-    // TEST 1A: Try RAISING terrain instead of lowering (maybe Y axis is inverted?)
-    vertex.y += 100.0;  // THIS SHOULD BE VISIBLE - terrain RISES ~1.4 meters
-
-    // TEST 1B: If 1A doesn't work, try lowering instead
-    //vertex.y -= 100.0;  // THIS SHOULD BE VISIBLE - terrain drops ~1.4 meters
-
-    // TEST 1C: If neither work, try MASSIVE displacement
-    //vertex.y += 1000.0;  // HUGE - terrain rises ~14 meters!
-
-    // TEST 1D: Try X or Z axis to verify ANY vertex modification works
-    //vertex.x += 1000.0;  // Shift terrain horizontally
+    // TEST 1A: Try RAISING terrain (modify BEFORE transformation)
+    //vertex.y += 100.0;  // THIS SHOULD BE VISIBLE - terrain RISES ~1.4 meters
 
     // TEST 2: If TEST 1 works, comment it out and uncomment this to test the uniform
     /*
@@ -90,6 +81,11 @@ void main(void)
     */
 
     gl_Position = modelToClip(vertex);
+
+    // CRITICAL TEST: Modify gl_Position AFTER transformation to verify shader runs
+    // This should collapse ALL terrain to a single point at center of screen
+    // If this doesn't work, the shader is NOT running on the visible terrain!
+    gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
 
     vec4 viewPos = modelToView(vertex);
     gl_ClipVertex = viewPos;
