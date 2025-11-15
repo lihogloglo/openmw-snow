@@ -325,16 +325,18 @@ namespace Terrain
         // SNOW DEFORMATION: Subdivide terrain near player for better deformation quality
         // Calculate distance from player to chunk center (horizontal distance only, ignore height)
 
+        // Calculate which cell the player is in
+        float cellSize = mStorage->getCellWorldSize(mWorldspace);
+        float playerCellX = mPlayerPosition.x() / cellSize;
+        float playerCellZ = mPlayerPosition.z() / cellSize;  // Z is north-south!
+
         // chunkCenter is in cell units (e.g., -21, 26 means cell coordinates)
         // Convert to world units by multiplying by cell size
-        float cellSize = mStorage->getCellWorldSize(mWorldspace);
         osg::Vec2f worldChunkCenter2D(chunkCenter.x() * cellSize, chunkCenter.y() * cellSize);
 
-        // Player position is (X, Z, Y) in Morrowind format where:
-        // - mPlayerPosition.x() = X coordinate (east-west)
-        // - mPlayerPosition.y() = Z coordinate (north-south)
-        // - mPlayerPosition.z() = Y coordinate (height)
-        osg::Vec2f playerPos2D(mPlayerPosition.x(), mPlayerPosition.y());
+        // Player position: CRITICAL - use .x() and .z(), NOT .y()!
+        // In OSG Vec3: .x()=X (east-west), .y()=Y (height), .z()=Z (north-south)
+        osg::Vec2f playerPos2D(mPlayerPosition.x(), mPlayerPosition.z());
 
         // Calculate horizontal distance only (ignore height difference)
         float distance = (playerPos2D - worldChunkCenter2D).length();
@@ -344,8 +346,8 @@ namespace Terrain
                            << " chunkSize=" << chunkSize
                            << " lod=" << (int)lod
                            << " player=(" << mPlayerPosition.x() << "," << mPlayerPosition.y() << "," << mPlayerPosition.z() << ")"
+                           << " playerCell=(" << playerCellX << "," << playerCellZ << ")"
                            << " chunkCenter=(" << chunkCenter.x() << "," << chunkCenter.y() << ")"
-                           << " worldCenter2D=(" << worldChunkCenter2D.x() << "," << worldChunkCenter2D.y() << ")"
                            << " distance=" << distance;
 
         // Subdivide based on distance
@@ -393,15 +395,6 @@ namespace Terrain
 
                 subdividedDrawable->setupWaterBoundingBox(-1, chunkSize * mStorage->getCellWorldSize(mWorldspace) / numVerts);
                 subdividedDrawable->createClusterCullingCallback();
-
-                // DEBUG: Color subdivided chunks bright red so they're visible
-                osg::ref_ptr<osg::StateSet> stateSet = new osg::StateSet(*subdividedDrawable->getStateSet(), osg::CopyOp::SHALLOW_COPY);
-                osg::ref_ptr<osg::Material> material = new osg::Material;
-                material->setDiffuse(osg::Material::FRONT_AND_BACK, osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f)); // Bright red
-                material->setAmbient(osg::Material::FRONT_AND_BACK, osg::Vec4(0.5f, 0.0f, 0.0f, 1.0f));
-                material->setColorMode(osg::Material::AMBIENT_AND_DIFFUSE);
-                stateSet->setAttributeAndModes(material, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-                subdividedDrawable->setStateSet(stateSet);
 
                 Log(Debug::Warning) << "[SNOW DEBUG] Successfully subdivided terrain chunk (distance: " << distance << ", level: " << subdivisionLevel << ")";
 
