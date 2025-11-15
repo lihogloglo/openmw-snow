@@ -110,10 +110,12 @@ namespace Terrain
         osg::Vec2f lastClearPos2D(mLastCacheClearPosition.x(), mLastCacheClearPosition.y());
         float movementDistance = (currentPos2D - lastClearPos2D).length();
 
-        // Threshold: clear cache if player moved more than 256 units (~30 meters)
+        // Threshold: clear cache if player moved more than 128 units (~15 meters)
         // This ensures chunks are recreated with updated subdivision based on new position
-        // 256 units is chosen as it's half the high-detail subdivision radius (512 units)
-        const float CACHE_CLEAR_THRESHOLD = 256.0f;
+        // 128 units is chosen as 1/4 of the high-detail subdivision radius (512 units)
+        // This means chunks are refreshed frequently enough that player always enters
+        // terrain with proper subdivision level for their current position
+        const float CACHE_CLEAR_THRESHOLD = 128.0f;
 
         if (movementDistance > CACHE_CLEAR_THRESHOLD)
         {
