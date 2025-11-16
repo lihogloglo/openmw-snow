@@ -85,7 +85,8 @@ void main(void)
     // Expected: Terrain creates a "staircase" pattern based on chunk positions
     // If all flat: chunkWorldOffset is zero (PROBLEM!)
     // If staircase/waves: chunkWorldOffset is being set correctly
-
+    // STATUS: ✅ WORKING - Move to next test
+    /*
     if (snowDeformationEnabled)
     {
         // Create visible pattern from chunk offset
@@ -94,13 +95,13 @@ void main(void)
         float pattern = mod(abs(chunkWorldOffset.x) + abs(chunkWorldOffset.y), 1000.0);
         vertex.z += pattern * 0.5;  // Creates steps/waves
     }
-    
-    
+    */
+
 
     // TEST 5: Is world position calculation working?
     // Expected: Terrain within 300 units of player rises 500 units (circular plateau)
     // If no plateau: World position calculation is broken
-    /*
+
     if (snowDeformationEnabled)
     {
         vec3 worldPos = vertex.xyz + chunkWorldOffset;
@@ -110,7 +111,6 @@ void main(void)
         if (distFromPlayer < snowDeformationRadius * 2.0)  // 300 units
             vertex.z += 500.0;  // Circular plateau around player
     }
-    */
 
     // TEST 6: Are UVs being calculated correctly?
     // Expected: Smooth circular cone rising 500 units at center, tapering to 0 at edges
