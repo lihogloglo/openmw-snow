@@ -135,6 +135,7 @@ void main(void)
     // TEST 7: Can we sample the texture at center?
     // Expected: ALL terrain rises/sinks based on texture center value
     // Should rise/sink by 100 units everywhere if test pattern exists (50 * 2)
+    // STATUS: ✅ WORKING - Terrain dropped by -100 (texture has value 50 at center)
     /*
     if (snowDeformationEnabled)
     {
@@ -146,7 +147,7 @@ void main(void)
 
     // TEST 8: Can we sample the texture with calculated UVs?
     // Expected: Circular depression following player (100 units deep at center)
-    /*
+
     if (snowDeformationEnabled)
     {
         vec3 worldPos = vertex.xyz + chunkWorldOffset;
@@ -156,7 +157,6 @@ void main(void)
         float deformationDepth = texture2D(snowDeformationMap, deformUV).r;
         vertex.z -= deformationDepth * 2.0;  // 100 units at center (50 * 2)
     }
-    */
 
     // TEST 9: FINAL - Full implementation with normal depth
     // Expected: Subtle 50-unit depression following player
