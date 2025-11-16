@@ -395,7 +395,7 @@ namespace Terrain
 
         // Convert chunk center from cell units to world units
         // chunkCenter is in cell coordinates (e.g., 0.5, 0.5 = center of cell 0,0)
-        float cellSize = mStorage->getCellWorldSize(mWorldspace);
+        // Note: cellSize already declared above for chunkWorldOffset calculation
         osg::Vec2f worldChunkCenter2D(chunkCenter.x() * cellSize, chunkCenter.y() * cellSize);
 
         // Get player's horizontal position (x=east-west, y=north-south in world units)
